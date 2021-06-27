@@ -1,0 +1,8 @@
+.vscode
+*.db
+*.db-shm
+*.db-wal
+config.json
+bin/
+obj/
+.env

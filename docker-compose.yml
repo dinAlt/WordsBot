@@ -1,0 +1,13 @@
+version: '3'
+services:
+  wordsbot:
+    image: wordsbot:latest
+    environment:
+      WORDSBOT_TelegramAccessToken: 1769993563:AAFf98Oou92JAxzqxuf2dlYZgr___NsmLmQ
+      WORDSBOT_YandexCloudServiceAccountKey: AQVN3itdZvUUaUIyAa7v2S2JCTCumpsyAHIpK_t5
+      WORDSBOT_YandexCloudFolderId: b1gocbo443v19aeoofn9
+      WORDSBOT_SqliteDatabasePath: /data/base.db
+    volumes:
+      - data:/data
+volumes:
+  data: {}

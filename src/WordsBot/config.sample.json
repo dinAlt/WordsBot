@@ -1,0 +1,6 @@
+{
+  "TelegramAccessToken": "",
+  "YandexCloudServiceAccountKey": "",
+  "YandexCloudFolderId": "",
+  "SqliteDatabasePath": "base.db"
+}
