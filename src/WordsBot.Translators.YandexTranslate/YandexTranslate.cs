@@ -16,13 +16,13 @@ namespace WordsBot.Translators.YandexTranslate
 
     readonly string _serviceAccountKey;
     readonly string _folderId;
+    readonly HttpClient _httpClient = new();
 
     public YandexTranslate(string serviceAccountKey, string folderId) =>
       (_serviceAccountKey, _folderId) = (serviceAccountKey, folderId);
 
     public async Task<List<string>> TranslateAsync(string word, string from, string to)
     {
-      var cli = new HttpClient();
       using var content = JsonContent.Create(new
       {
         folderId = _folderId,
@@ -30,9 +30,10 @@ namespace WordsBot.Translators.YandexTranslate
         targetLanguageCode = to,
         texts = new string[] { word }
       });
-      cli.DefaultRequestHeaders.Authorization =
+
+      _httpClient.DefaultRequestHeaders.Authorization =
         new AuthenticationHeaderValue("Api-Key", _serviceAccountKey);
-      using var res = await cli.PostAsync(_endpoint, content);
+      using var res = await _httpClient.PostAsync(_endpoint, content);
       if (res.StatusCode != HttpStatusCode.OK)
       {
         throw new Exception(await res.Content.ReadAsStringAsync());
