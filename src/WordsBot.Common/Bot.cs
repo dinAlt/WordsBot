@@ -225,6 +225,7 @@ namespace WordsBot.Common
     {
       var word = q.Data.Remove(0, q.Data.IndexOf('|') + 1);
       var translations = dbContext.GetTranslation(word, "en", "ru");
+      await _telegramBotClient.AnswerCallbackQueryAsync(q.Id);
       await _telegramBotClient.SendTextMessageAsync(q.From.Id,
         string.Join("\n", translations), ParseMode.Html);
     }
