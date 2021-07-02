@@ -59,11 +59,12 @@ namespace WordsBot.Common.Test
     [Fact]
     public void MessageRegexWorks()
     {
-      var (match, word, num, of) = Bot.ParseWordMessage("<b>some</b><br>1 из 10");
+      var (match, word, num, of, fails) = Bot.ParseWordMessage("some\n(1\\10\\0)");
       Assert.True(match);
       Assert.Equal("some", word);
       Assert.Equal(1, num);
       Assert.Equal(10, of);
+      Assert.Equal(0, fails);
     }
   }
 }

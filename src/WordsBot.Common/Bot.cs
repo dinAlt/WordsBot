@@ -33,7 +33,8 @@ namespace WordsBot.Common
 
     static Bot()
     {
-      _wordMessageRegex = new Regex(@"(?<word>.*)\n\((?<num>\d+)\\(?<of>\d+)\)", RegexOptions.Compiled | RegexOptions.Multiline);
+      _wordMessageRegex = new Regex(
+        @"(?<word>.*)\n\((?<num>\d+)\\(?<of>\d+)\\(?<fails>\d+)\)", RegexOptions.Compiled | RegexOptions.Multiline);
     }
 
     public async Task Run()
@@ -75,18 +76,18 @@ namespace WordsBot.Common
 
     private async Task HandleMessageReplyAsync(Message m)
     {
-      var (match, word, num, of) = ParseWordMessage(m.ReplyToMessage.Text);
+      var (match, word, num, of, fails) = ParseWordMessage(m.ReplyToMessage.Text);
       if (!match) return;
-      await HandleWordReplyAsync(m, word, num, of);
+      await HandleWordReplyAsync(m, word, num, of, fails);
     }
 
-    private async Task HandleWordReplyAsync(Message reply, string word, int num, int of)
+    private async Task HandleWordReplyAsync(Message reply, string word, int num, int of, int fails)
     {
       var dbContext = _dbFactory.GetContext();
       var translations = dbContext.GetTranslation(word, "en", "ru");
       if (translations.Count == 0)
       {
-        await _telegramBotClient.SendTextMessageAsync(reply.From.Id, "нет перевода для");
+        await _telegramBotClient.SendTextMessageAsync(reply.From.Id, "нет перевода");
         return;
       }
 
@@ -95,41 +96,50 @@ namespace WordsBot.Common
         await _telegramBotClient.SendTextMessageAsync(reply.From.Id, "Не верно",
           replyMarkup: new InlineKeyboardMarkup(new InlineKeyboardButton
           {
-            Text = "показать перевод",
+            Text = "перевести",
             CallbackData = $"{CallbackCommand.Translate}|{word}",
           }));
-        return;
+        fails++;
       }
 
       if (num < of)
       {
-        await SendNextWordAsync(reply.From.Id, ++num, of, dbContext);
+        await SendNextWordAsync(reply.From.Id, ++num, of, fails, dbContext);
         return;
       }
 
       await _telegramBotClient.SendTextMessageAsync(reply.From.Id, "Игра завершена!");
     }
 
-    private async Task SendNextWordAsync(long userId, int num, int of, IDbContext dbContext)
+    private async Task SendNextWordAsync(long userId,
+     int num, int of, int fails, IDbContext dbContext)
     {
+      var word = dbContext.RandomWordFor(userId);
+
       await _telegramBotClient.SendTextMessageAsync(userId,
-        $"<b>{dbContext.RandomWordFor(userId)}</b>\n({num}\\{of})",
+        $"<b>{word}</b>\n({num}\\{of}\\{fails})",
+        replyMarkup: new InlineKeyboardMarkup(new InlineKeyboardButton
+        {
+          Text = "не знаю",
+          CallbackData = $"{CallbackCommand.Surrender}|{word}",
+        }),
         parseMode: ParseMode.Html);
     }
 
-    public static (bool match, string word, int num, int of) ParseWordMessage(string text)
+    public static (bool match, string word, int num, int of, int fails) ParseWordMessage(string text)
     {
       var match = _wordMessageRegex.Match(text);
       if (!match.Success)
       {
-        return (false, "", -1, -1);
+        return (false, "", -1, -1, -1);
       }
 
       var word = match.Groups["word"].Value;
       var num = int.Parse(match.Groups["num"].Value);
       var of = int.Parse(match.Groups["of"].Value);
+      var fails = int.Parse(match.Groups["fails"].Value);
 
-      return (true, word, num, of);
+      return (true, word, num, of, fails);
     }
 
     private async Task HandleCommnadAsync(Message m)
@@ -161,7 +171,7 @@ namespace WordsBot.Common
         return;
       }
 
-      await SendNextWordAsync(m.From.Id, 1, count, dbContext);
+      await SendNextWordAsync(m.From.Id, 1, count, 0, dbContext);
     }
 
     private async Task HandleCallbackQueryAsync(CallbackQuery q)
@@ -180,9 +190,35 @@ namespace WordsBot.Common
         case CallbackCommand.Translate:
           await HandleTranslateCmdAsync(q, dbContext);
           break;
+        case CallbackCommand.Surrender:
+          await HandleSurrenderCmdAsync(q, dbContext);
+          break;
         default:
           throw new NotImplementedException($"CallbackCommand: {cmd}");
       }
+    }
+
+    private async Task HandleSurrenderCmdAsync(CallbackQuery q, IDbContext dbContext)
+    {
+      await _telegramBotClient.AnswerCallbackQueryAsync(q.Id);
+      var (match, word, num, of, fails) = ParseWordMessage(q.Message.Text);
+      if (!match)
+      {
+        await _telegramBotClient.SendTextMessageAsync(q.From.Id, "ошибка обработки команды");
+        return;
+      }
+
+      var translations = dbContext.GetTranslation(word, "en", "ru");
+      await _telegramBotClient.SendTextMessageAsync(q.From.Id,
+        string.Join("\n", translations), ParseMode.Html);
+
+      if (num >= of)
+      {
+        await _telegramBotClient.SendTextMessageAsync(q.From.Id, "игра завершена");
+        return;
+      }
+
+      await SendNextWordAsync(q.From.Id, ++num, of, ++fails, dbContext);
     }
 
     private async Task HandleTranslateCmdAsync(CallbackQuery q, IDbContext dbContext)
@@ -271,6 +307,7 @@ namespace WordsBot.Common
     Add,
     Remove,
     Translate,
+    Surrender,
   }
 
   public enum MessageCommand
