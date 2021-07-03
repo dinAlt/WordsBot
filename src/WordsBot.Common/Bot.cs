@@ -22,7 +22,9 @@ namespace WordsBot.Common
     QueuedUpdateReceiver? updateReceiver;
 #nullable disable
 
-    public Bot(string accessToken, ITranslator translater, IDbContextFactory dbFactory) : this(new TelegramBotClient(accessToken), translater, dbFactory) { }
+    public Bot(string accessToken, ITranslator translater, IDbContextFactory dbFactory) :
+      this(new TelegramBotClient(accessToken), translater, dbFactory)
+    { }
 
     public Bot(ITelegramBotClient botClient, ITranslator translator, IDbContextFactory dbFactory)
     {
@@ -34,7 +36,8 @@ namespace WordsBot.Common
     static Bot()
     {
       _wordMessageRegex = new Regex(
-        @"(?<word>.*)\n\((?<num>\d+)\\(?<of>\d+)\\(?<fails>\d+)\)", RegexOptions.Compiled | RegexOptions.Multiline);
+        @"(?<word>.*)\n\((?<num>\d+)\\(?<of>\d+)\\(?<fails>\d+)\)",
+          RegexOptions.Compiled | RegexOptions.Multiline);
     }
 
     public async Task Run()
@@ -81,7 +84,8 @@ namespace WordsBot.Common
       await HandleWordReplyAsync(m, word, num, of, fails);
     }
 
-    private async Task HandleWordReplyAsync(Message reply, string word, int num, int of, int fails)
+    private async Task HandleWordReplyAsync(Message reply, string word, int num,
+      int of, int fails)
     {
       var dbContext = _dbFactory.GetContext();
       var translations = dbContext.GetTranslation(word, "en", "ru");
