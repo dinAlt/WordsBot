@@ -12,6 +12,7 @@ namespace WordsBot.Database.Sqlite
   {
     public DbSet<Translation> Translations => Set<Translation>();
     public DbSet<TrainingTranslation> TrainingTranslations => Set<TrainingTranslation>();
+    public DbSet<GameSession> GameSessions => Set<GameSession>();
 
     public SqliteDbContext(string dbPath)
     {
@@ -58,14 +59,28 @@ namespace WordsBot.Database.Sqlite
     public string RandomWordFor(long userId)
     {
       return TrainingTranslations.
-        FromSqlInterpolated($"select * from TrainingTranslations where UserId = {userId} order by RANDOM() limit 1").
+        FromSqlInterpolated(
+          $"select * from TrainingTranslations where UserId = {userId} order by RANDOM() limit 1").
         FirstOrDefault()?.Word ?? string.Empty;
     }
+
+    public void UpdateGameSession(GameSession session)
+    {
+      Update(session);
+    }
+
+    public GameSession GetGamesSession(long userId)
+    {
+      return GameSessions.Where(e => e.UserId == userId).FirstOrDefault() ?? new();
+    }
+
 
     void IDbContext.SaveChanges()
     {
       base.SaveChanges();
     }
+
+    private readonly string _conString;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -80,16 +95,20 @@ namespace WordsBot.Database.Sqlite
             c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
             c => c.ToList())
           );
-      modelBuilder.Entity<TrainingTranslation>().
-        HasKey(e => new { e.UserId, e.Word });
+
+      modelBuilder
+        .Entity<TrainingTranslation>()
+        .HasKey(e => new { e.UserId, e.Word });
+
+      modelBuilder
+        .Entity<GameSession>()
+        .HasIndex(e => e.UserId)
+        .IsUnique(true);
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
       optionsBuilder.UseSqlite($"Data source={_conString}");
     }
-
-    private readonly string _conString;
-
   }
 }

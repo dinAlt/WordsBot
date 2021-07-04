@@ -98,15 +98,16 @@ namespace WordsBot.Common
       if (!translations.Any(t => t == reply.Text.ToLower().Trim()))
       {
         await _telegramBotClient.SendTextMessageAsync(reply.From.Id, "Не верно",
-          replyMarkup: new InlineKeyboardMarkup(new InlineKeyboardButton
-          {
-            Text = "перевести",
-            CallbackData = $"{CallbackCommand.Translate}|{word}",
-          }));
+            replyMarkup: new InlineKeyboardMarkup(new InlineKeyboardButton
+            {
+              Text = "перевести",
+              CallbackData = $"{CallbackCommand.Translate}|{word}",
+            }),
+            replyToMessageId: reply.MessageId
+          );
         fails++;
       }
-
-      if (num < of)
+      else if (num < of)
       {
         await SendNextWordAsync(reply.From.Id, ++num, of, fails, dbContext);
         return;
@@ -130,7 +131,8 @@ namespace WordsBot.Common
         parseMode: ParseMode.Html);
     }
 
-    public static (bool match, string word, int num, int of, int fails) ParseWordMessage(string text)
+    public static (bool match, string word, int num, int of, int fails)
+      ParseWordMessage(string text)
     {
       var match = _wordMessageRegex.Match(text);
       if (!match.Success)
@@ -288,7 +290,8 @@ namespace WordsBot.Common
         parseMode: ParseMode.Html, replyMarkup: kb);
     }
 
-    private async Task<List<string>> TranslateAsync(string word, string from, string to, IDbContext dbContext)
+    private async Task<List<string>> TranslateAsync(string word, string from, string to,
+      IDbContext dbContext)
     {
       var variants = await _translator.TranslateAsync(word, from, to);
       if (variants.Count > 0)

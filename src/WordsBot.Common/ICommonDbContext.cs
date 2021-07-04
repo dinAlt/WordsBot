@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace WordsBot.Common
 {
-  public interface IDbContext : IDisposable
+  public interface ICommonDbContext : IDisposable
   {
     List<string> GetTranslation(string word, string from, string to);
     void AddTranslation(string word, string from, string to, IEnumerable<string> variants);
