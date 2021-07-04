@@ -21,7 +21,7 @@ namespace WordsBot.Translators.YandexTranslate
     public YandexTranslate(string serviceAccountKey, string folderId) =>
       (_serviceAccountKey, _folderId) = (serviceAccountKey, folderId);
 
-    public async Task<List<string>> TranslateAsync(string word, string from, string to)
+    public async Task<IEnumerable<string>> TranslateAsync(string word, string from, string to)
     {
       using var content = JsonContent.Create(new
       {

@@ -1,7 +1,9 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Telegram.Bot;
 using WordsBot.Common;
+using WordsBot.Common.Views;
 using WordsBot.Database.Sqlite;
 using WordsBot.Translators.YandexTranslate;
 
@@ -28,16 +30,23 @@ namespace WordsBot
       {
         dbContext!.Database.Migrate();
       }
+      var telegramBotClient = new TelegramBotClient(telegramAccessToken);
+      var router = new Router(
+        dbContextFactory,
+        telegramBotClient,
+        new ViewFactory(),
+        new YandexTranslate(yandexCloudServiceAccountKey, yandexCloudFolderId)
+      );
 
-      var bot = new Bot(telegramAccessToken,
-        new YandexTranslate(yandexCloudServiceAccountKey, yandexCloudFolderId),
-        dbContextFactory);
+      var bot = new Bot(telegramBotClient, router);
+
 
       Console.CancelKeyPress += async (sender, eventArgs) =>
       {
         Console.WriteLine("Shutting down gracefully");
         eventArgs.Cancel = true;
         await bot.Stop();
+        Console.WriteLine("Success");
       };
 
       Console.WriteLine("Startup");
@@ -48,6 +57,11 @@ namespace WordsBot
   // EF cli needs DbContext descendant, to generate migrations.
   class ProgramDbContext : SqliteDbContext
   {
+    public ProgramDbContext() : base()
+    {
+
+    }
+
     public ProgramDbContext(string dbPath) : base(dbPath)
     {
     }

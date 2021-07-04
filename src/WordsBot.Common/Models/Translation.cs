@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 
-namespace WordsBot.Database.Sqlite.Models
+namespace WordsBot.Common.Models
 {
   [Index(nameof(Word), nameof(From), nameof(To), IsUnique = true)]
   public class Translation
@@ -21,17 +19,5 @@ namespace WordsBot.Database.Sqlite.Models
     public string From { get; set; }
     public string To { get; set; }
     public List<string> Values { get; } = new List<string>();
-  }
-
-  public class TrainingTranslation
-  {
-    public TrainingTranslation(long userId, string word)
-    {
-      UserId = userId;
-      Word = word;
-    }
-
-    public long UserId { get; set; }
-    public string Word { get; set; }
   }
 }

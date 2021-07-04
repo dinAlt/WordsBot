@@ -15,7 +15,51 @@ namespace WordsBot.Migrations
             modelBuilder
                 .HasAnnotation("ProductVersion", "5.0.7");
 
-            modelBuilder.Entity("WordsBot.Database.Sqlite.Models.TrainingTranslation", b =>
+            modelBuilder.Entity("WordsBot.Common.Models.GameSession", b =>
+                {
+                    b.Property<int>("GameSessionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("CurrentWord")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("CurrentWordNumber")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("FailsCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("From")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("State")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("SuccessCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("To")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("TotalWordsCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("GameSessionId");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("GameSessions");
+                });
+
+            modelBuilder.Entity("WordsBot.Common.Models.TrainingTranslation", b =>
                 {
                     b.Property<long>("UserId")
                         .HasColumnType("INTEGER");
@@ -28,22 +72,26 @@ namespace WordsBot.Migrations
                     b.ToTable("TrainingTranslations");
                 });
 
-            modelBuilder.Entity("WordsBot.Database.Sqlite.Models.Translation", b =>
+            modelBuilder.Entity("WordsBot.Common.Models.Translation", b =>
                 {
                     b.Property<int>("TranslationId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("From")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("To")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Values")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Word")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("TranslationId");
@@ -52,6 +100,17 @@ namespace WordsBot.Migrations
                         .IsUnique();
 
                     b.ToTable("Translations");
+                });
+
+            modelBuilder.Entity("WordsBot.Common.Models.UserInfo", b =>
+                {
+                    b.Property<long>("UserInfoId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("UserInfoId");
+
+                    b.ToTable("Users");
                 });
 #pragma warning restore 612, 618
         }
