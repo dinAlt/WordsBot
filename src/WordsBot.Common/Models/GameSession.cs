@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace WordsBot.Common
+namespace WordsBot.Common.Models
 {
   public class GameSession
   {
@@ -13,7 +13,7 @@ namespace WordsBot.Common
       WaitingCount,
     }
 
-    public int SessionId { get; set; }
+    public int GameSessionId { get; set; }
     public long UserId { get; set; }
     public string From { get; set; }
     public string To { get; set; }

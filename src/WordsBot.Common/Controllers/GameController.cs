@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
 using WordsBot.Common.Models;
+using WordsBot.Common.Views;
 
 namespace WordsBot.Common.Controllers
 {
@@ -11,7 +13,7 @@ namespace WordsBot.Common.Controllers
   {
     readonly GameSession _gameSession;
 
-    public GameController(WordsBotDbContext dbContext, ITelegramBotClient telegramBotClient, ICommandBuilder commandBuilder) : base(dbContext, telegramBotClient, commandBuilder)
+    public GameController(WordsBotDbContext dbContext, ITelegramBotClient telegramBotClient, ICommandBuilder commandBuilder, IViewFactory viewFactory) : base(dbContext, telegramBotClient, commandBuilder, viewFactory)
     {
     }
 
@@ -23,7 +25,7 @@ namespace WordsBot.Common.Controllers
       }
     }
 
-    public override Task HandleCallbackAsync(CallbackQuery query, string[] parsedArgs)
+    public override Task HandleCallbackAsync(CallbackQuery query, IEnumerable<string> parsedArgs)
     {
       throw new NotImplementedException();
     }
@@ -49,7 +51,7 @@ namespace WordsBot.Common.Controllers
       Fail,
     }
 
-    private async Task HandleAnswerMessage(Message message)
+    private Task HandleAnswerMessage(Message message)
     {
       throw new NotImplementedException();
     }
@@ -111,7 +113,7 @@ namespace WordsBot.Common.Controllers
 
     private async Task SendNextWord(ChatId to)
     {
-      _gameSession.CurrentWord = _dbContext.RandomWord(to);
+      _gameSession.CurrentWord = _dbContext.RandomWord(to.Identifier);
       _gameSession.CurrentWordNumber++;
       _dbContext.Update(_gameSession);
 

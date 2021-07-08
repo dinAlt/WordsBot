@@ -117,7 +117,7 @@ namespace WordsBot.Common
     }
 
     private async Task SendNextWordAsync(long userId,
-     int num, int of, int fails, IDbContext dbContext)
+     int num, int of, int fails, ICommonDbContext dbContext)
     {
       var word = dbContext.RandomWordFor(userId);
 
@@ -168,7 +168,7 @@ namespace WordsBot.Common
       }
     }
 
-    private async Task HandleRunCmdAsync(Message m, IDbContext dbContext)
+    private async Task HandleRunCmdAsync(Message m, ICommonDbContext dbContext)
     {
       if (!int.TryParse(m.Text.Remove(0, m.Text.IndexOf(' ') + 1).Trim(), out int count))
       {
@@ -204,7 +204,7 @@ namespace WordsBot.Common
       }
     }
 
-    private async Task HandleSurrenderCmdAsync(CallbackQuery q, IDbContext dbContext)
+    private async Task HandleSurrenderCmdAsync(CallbackQuery q, ICommonDbContext dbContext)
     {
       await _telegramBotClient.AnswerCallbackQueryAsync(q.Id);
       var (match, word, num, of, fails) = ParseWordMessage(q.Message.Text);
@@ -227,7 +227,7 @@ namespace WordsBot.Common
       await SendNextWordAsync(q.From.Id, ++num, of, ++fails, dbContext);
     }
 
-    private async Task HandleTranslateCmdAsync(CallbackQuery q, IDbContext dbContext)
+    private async Task HandleTranslateCmdAsync(CallbackQuery q, ICommonDbContext dbContext)
     {
       var word = q.Data.Remove(0, q.Data.IndexOf('|') + 1);
       var translations = dbContext.GetTranslation(word, "en", "ru");
@@ -236,7 +236,7 @@ namespace WordsBot.Common
         string.Join("\n", translations), ParseMode.Html);
     }
 
-    private async Task HandleAddCmdAsync(CallbackQuery q, IDbContext dbContext)
+    private async Task HandleAddCmdAsync(CallbackQuery q, ICommonDbContext dbContext)
     {
       var word = q.Data.Remove(0, q.Data.IndexOf('|') + 1);
       if (!dbContext.IsTrainingWord(q.From.Id, word))
@@ -247,7 +247,7 @@ namespace WordsBot.Common
       await _telegramBotClient.AnswerCallbackQueryAsync(q.Id, $"Добавлено: {word}");
     }
 
-    private async Task HandleRemoveCmdAsync(CallbackQuery q, IDbContext dbContext)
+    private async Task HandleRemoveCmdAsync(CallbackQuery q, ICommonDbContext dbContext)
     {
       var word = q.Data.Remove(0, q.Data.IndexOf('|') + 1);
       dbContext.RemoveTrainingWord(q.From.Id, word);
@@ -291,7 +291,7 @@ namespace WordsBot.Common
     }
 
     private async Task<List<string>> TranslateAsync(string word, string from, string to,
-      IDbContext dbContext)
+      ICommonDbContext dbContext)
     {
       var variants = await _translator.TranslateAsync(word, from, to);
       if (variants.Count > 0)

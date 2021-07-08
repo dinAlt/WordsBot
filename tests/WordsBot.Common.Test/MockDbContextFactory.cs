@@ -3,9 +3,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace WordsBot.Common.Test
 {
-  internal class MockDbContextFactory : IDbContextFactory
+  internal class MockDbContextFactory : IDbContextFactory<MockDbContext>
   {
-    public IDbContext GetContext()
+    public MockDbContext CreateDbContext()
     {
       var res = new MockDbContext("");
       if (res.Database.GetMigrations().Any())
