@@ -5,6 +5,6 @@ namespace WordsBot.Common
 {
   public interface ITranslator
   {
-    Task<List<string>> TranslateAsync(string word, string from, string to);
+    Task<IEnumerable<string>> TranslateAsync(string word, string from, string to);
   }
 }

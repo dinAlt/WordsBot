@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace WordsBot.Common.Test
 {
-  public record MockTranslation(string Word, string From, string To, List<string> Values);
+  public record MockTranslation(string Word, string From, string To, IEnumerable<string> Values);
 
   public class MockTranslater : ITranslator
   {
@@ -16,7 +16,7 @@ namespace WordsBot.Common.Test
       stored = translations;
     }
 
-    public Task<List<string>> TranslateAsync(string word, string from, string to)
+    public Task<IEnumerable<string>> TranslateAsync(string word, string from, string to)
     {
       AccessCount++;
       return Task.FromResult(

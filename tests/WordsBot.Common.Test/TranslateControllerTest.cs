@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -16,25 +17,33 @@ namespace WordsBot.Common.Test
 
     [Theory]
     [MemberData(nameof(GetMessageCase))]
-    public async Task HandlesMessage(Message message, object want)
+    public async Task HandlesMessage(Message message, MockTranslater translator, TranslateWordView.Data want, bool wantTranslatorCall)
     {
       var viewFactory = new MockViewFactory();
-      var controller = new TranslateController(_dbCotextFactory.CreateDbContext(),
-        _botClient, new CommandBuilder('|'), viewFactory);
+      var controller = new TranslateController(_dbContextFactory.CreateDbContext(),
+        _botClient, new CommandBuilder('|'), viewFactory, translator);
 
       await controller.HandleMessageAsync(message);
 
       Assert.Single(viewFactory.Views);
 
       var view = viewFactory.Views.First() as MockView ??
-        throw new System.Exception($"view is not {nameof(MockView)}");
+        throw new Exception($"view is not {nameof(MockView)}");
 
       Assert.True(view.Rendered);
-      Assert.Equal(want, view.Data);
+      Assert.Equal(wantTranslatorCall, translator.AccessCount > 0);
+      var viewData = (TranslateWordView.Data)view.Data;
+      Assert.Equal(want.Word, viewData.Word);
+      Assert.Equal(want.IsWordTraining, viewData.IsWordTraining);
+      Assert.Equal(want.Translations, viewData.Translations);
+      Assert.Equal(want.CallbackData, viewData.CallbackData);
     }
 
     public static IEnumerable<object[]> GetMessageCase()
     {
+      static ITranslator getTranslator() => new MockTranslater(
+       new MockTranslation("tincture", "en", "ru", new string[] { "настойка" }));
+
       yield return new object[] {
           new Message {
             MessageId = 1,
@@ -42,46 +51,85 @@ namespace WordsBot.Common.Test
             From = new User{
               Id = 123,
             },
-            ReplyMarkup = new InlineKeyboardMarkup(new InlineKeyboardButton{
-              Text = "добавить",
-              CallbackData = "add|tincture"
-            })
           },
+          getTranslator(),
           new TranslateWordView.Data(123, "tincture",
-            new List<string>(new string[] { "настойка" }), false, "add|tincture")
+            new List<string>(new string[] { "настойка" }), false, "add|tincture"),
+          true,
         };
+
+      yield return new object[] {
+          new Message {
+            MessageId = 2,
+            Text = "tincture",
+            From = new User{
+              Id = 123,
+            },
+          },
+          getTranslator(),
+          new TranslateWordView.Data(123, "tincture",
+            new List<string>(new string[] { "настойка" }), true, "remove|tincture"),
+          false,
+        };
+
+      using var dbContext = _dbContextFactory.CreateDbContext();
+      dbContext.TrainingTranslations.Add(new Models.TrainingTranslation(123, "tincture"));
+      dbContext.SaveChanges();
     }
 
 
     [Theory]
-    [MemberData(nameof(HandlesCallback))]
-    public async Task HandlesCallback(CallbackQuery query, IEnumerable<string> parsedArgs, object want)
+    [MemberData(nameof(GetCallbackCase))]
+    public async Task HandlesCallback(CallbackQuery query, IEnumerable<string> parsedArgs, AddRemoveWordView.Data want)
     {
       var viewFactory = new MockViewFactory();
-      var controller = new TranslateController(_dbCotextFactory.CreateDbContext(),
-        _botClient, new CommandBuilder('|'), viewFactory);
+      var controller = new TranslateController(_dbContextFactory.CreateDbContext(),
+        _botClient, new CommandBuilder('|'), viewFactory, new MockTranslater());
 
       await controller.HandleCallbackAsync(query, parsedArgs);
 
       Assert.Single(viewFactory.Views);
 
       var view = viewFactory.Views.First() as MockView ??
-        throw new System.Exception($"view is not {nameof(MockView)}");
+        throw new Exception($"view is not {nameof(MockView)}");
 
       Assert.True(view.Rendered);
-      Assert.Equal(want, view.Data);
+      var viewData = (AddRemoveWordView.Data)view.Data;
+      Assert.Equal(want.IsWordTraining, viewData.IsWordTraining);
+      Assert.Equal(want.CallbackData, viewData.CallbackData);
+      using var dbContext = _dbContextFactory.CreateDbContext();
+      Assert.Equal(want.IsWordTraining, dbContext.TrainingTranslations.Any(
+        t => t.UserId == want.ChatId && t.Word == parsedArgs.ElementAt(1)));
     }
 
     public static IEnumerable<object[]> GetCallbackCase()
     {
       yield return new object[] {
           new CallbackQuery {
+            Message = new Message {
+              Chat = new Chat{Id = 123},
+              MessageId = 1,
+            },
+            From = new User { Id = 123},
+            Id = "1234",
+            Data = "add|plane"
           },
-          new string[] {"add", "tincture"},
-          new AddRemoveWordView.Data(123, 1, "1234", false, "add|tincture")
+          new string[] {"add", "plane"},
+          new AddRemoveWordView.Data(123, 1, "1234", true, "remove|plane")
+        };
+      yield return new object[] {
+          new CallbackQuery {
+            Message = new Message {
+              Chat = new Chat{Id = 123},
+              MessageId = 1,
+            },
+            From = new User { Id = 123},
+            Id = "1234",
+            Data = "remove|plane"
+          },
+          new string[] {"remove", "plane"},
+          new AddRemoveWordView.Data(123, 1, "1234", false, "add|plane")
         };
     }
-
-
   }
 }

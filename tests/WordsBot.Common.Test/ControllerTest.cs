@@ -10,13 +10,13 @@ namespace WordsBot.Common.Test
   {
 
 
-    protected static readonly IDbContextFactory<WordsBotDbContext> _dbCotextFactory;
+    protected static readonly IDbContextFactory<WordsBotDbContext> _dbContextFactory;
     protected static readonly IViewFactory _viewFactory;
     protected static readonly ITelegramBotClient _botClient;
 
     static ControllerTest()
     {
-      _dbCotextFactory = new MockDbContextFactory();
+      _dbContextFactory = new MockDbContextFactory();
       _viewFactory = new MockViewFactory();
       _botClient = new MockTelegramBotClient();
     }
