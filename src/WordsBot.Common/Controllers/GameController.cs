@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -9,9 +10,13 @@ using WordsBot.Common.Views;
 
 namespace WordsBot.Common.Controllers
 {
-  class GameController : Controller
+  public class GameController : Controller
   {
-    readonly GameSession _gameSession;
+    public enum Command
+    {
+      Run,
+      Fail,
+    }
 
     public GameController(WordsBotDbContext dbContext, ITelegramBotClient telegramBotClient, ICommandBuilder commandBuilder, IViewFactory viewFactory) : base(dbContext, telegramBotClient, commandBuilder, viewFactory)
     {
@@ -27,36 +32,37 @@ namespace WordsBot.Common.Controllers
 
     public override Task HandleCallbackAsync(CallbackQuery query, IEnumerable<string> parsedArgs)
     {
-      throw new NotImplementedException();
-    }
-
-    public override async Task HandleMessageAsync(Message message)
-    {
-      switch (State)
+      if (parsedArgs is null || !parsedArgs.Any())
       {
-        case GameSession.GameState.Running:
-          await HandleAnswerMessage(message);
-          break;
-        case GameSession.GameState.WaitingCount:
-          await HandleWordCountMessage(message);
-          return;
-        default:
-          throw new Exception($"unexpected game state: {State}");
+        throw new ArgumentException("Collection is empty.", nameof(parsedArgs));
       }
+
+      return Enum.Parse<Command>(parsedArgs.First()) switch
+      {
+        Command.Run => HandleRunAsync(query, parsedArgs.Skip(1)),
+        Command.Fail => HandleFailAsync(query, parsedArgs.Skip(1)),
+        _ => throw new NotImplementedException()
+      };
     }
 
-    private enum CallbackCommand
+    public override Task HandleMessageAsync(Message message) => State switch
     {
-      Run,
-      Fail,
-    }
+      GameSession.GameState.Undefined => throw new NotImplementedException(),
+      GameSession.GameState.Running => HandleAnswerMessageAsync(message),
+      GameSession.GameState.Ended => throw new NotImplementedException(),
+      GameSession.GameState.Paused => throw new NotImplementedException(),
+      GameSession.GameState.WaitingCount => HandleWordCountMessageAsync(message),
+      _ => throw new NotImplementedException()
+    };
 
-    private Task HandleAnswerMessage(Message message)
+    readonly GameSession _gameSession;
+
+    private Task HandleAnswerMessageAsync(Message message)
     {
       throw new NotImplementedException();
     }
 
-    private async Task HandleWordCountMessage(Message message)
+    private async Task HandleWordCountMessageAsync(Message message)
     {
       _ = int.TryParse(message.Text.Trim(), out int count);
       if (count < 1)
@@ -65,14 +71,14 @@ namespace WordsBot.Common.Controllers
         return;
       }
 
-      await StartGame(message.Chat.Id, count);
+      await StartGameAsync(message.Chat.Id, count);
     }
 
-    private async Task HandleStart(CallbackQuery query, string[] parsedArgs)
+    private async Task HandleRunAsync(CallbackQuery query, IEnumerable<string> parsedArgs)
     {
       int count = 0;
 
-      if (parsedArgs.Length > 0 && !int.TryParse(parsedArgs[0], out count))
+      if (parsedArgs.Any() && !int.TryParse(parsedArgs.First(), out count))
       {
         throw new Exception("count argument is not number");
       }
@@ -94,24 +100,24 @@ namespace WordsBot.Common.Controllers
 
         await _telegramBotClient.SendTextMessageAsync(query.From.Id,
           "Введите количество слов");
-        await ReplyCallback(query);
+        await ReplyCallbackAsync(query);
         return;
       }
 
-      await ReplyCallback(query);
-      await StartGame(query.ChatInstance, count);
+      await ReplyCallbackAsync(query);
+      await StartGameAsync(query.ChatInstance, count);
       _dbContext.SaveChanges();
     }
 
-    private async Task StartGame(ChatId forChat, int count)
+    private async Task StartGameAsync(ChatId forChat, int count)
     {
       await _telegramBotClient.SendTextMessageAsync(forChat, "Игра началась");
       _gameSession.TotalWordsCount = count;
       _gameSession.State = GameSession.GameState.Running;
-      await SendNextWord(forChat);
+      await SendNextWordAsync(forChat);
     }
 
-    private async Task SendNextWord(ChatId to)
+    private async Task SendNextWordAsync(ChatId to)
     {
       _gameSession.CurrentWord = _dbContext.RandomWord(to.Identifier);
       _gameSession.CurrentWordNumber++;
@@ -127,7 +133,7 @@ namespace WordsBot.Common.Controllers
             {
               Text = "не знаю",
               CallbackData = _commandBuilder.Add(
-                CallbackCommand.Fail.ToString(),
+                Command.Fail.ToString(),
                 _gameSession.CurrentWord
               ).Build(),
             }
@@ -135,23 +141,29 @@ namespace WordsBot.Common.Controllers
         );
     }
 
-    private async Task HandlePause(CallbackQuery query)
+    private async Task HandleFailAsync(CallbackQuery query, IEnumerable<string> args)
     {
-      await ReplyNotImplemented(query.From.Id);
+      await ReplyNotImplementedAsync(query.From.Id);
     }
 
-    private async Task HandleResume(CallbackQuery query)
+
+    private async Task HandlePauseAsync(CallbackQuery query)
     {
-      await ReplyNotImplemented(query.From.Id);
+      await ReplyNotImplementedAsync(query.From.Id);
     }
 
-    private Task ReplyNotImplemented(long to)
+    private async Task HandleResumeAsync(CallbackQuery query)
+    {
+      await ReplyNotImplementedAsync(query.From.Id);
+    }
+
+    private Task ReplyNotImplementedAsync(long to)
     {
       return _telegramBotClient.SendTextMessageAsync(
         to, "Комманда не релизована");
     }
 
-    private Task ReplyCallback(CallbackQuery query, string text = null)
+    private Task ReplyCallbackAsync(CallbackQuery query, string text = null)
     {
       return _telegramBotClient.AnswerCallbackQueryAsync(query.Id, text);
     }

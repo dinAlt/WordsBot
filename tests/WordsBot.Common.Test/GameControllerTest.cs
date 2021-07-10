@@ -10,15 +10,15 @@ using Xunit;
 
 namespace WordsBot.Common.Test
 {
-  public class TranslateControllerTest : ControllerTest
+  public class GameControllerTest : ControllerTest
   {
     [Theory]
     [MemberData(nameof(GetMessageCase))]
     public async Task HandlesMessage(Message message, MockTranslater translator, TranslateWordView.Data want, bool wantTranslatorCall)
     {
       var viewFactory = new MockViewFactory();
-      var controller = new TranslateController(_dbContextFactory.CreateDbContext(),
-        _botClient, new CommandBuilder('|'), viewFactory, translator);
+      var controller = new GameController(_dbContextFactory.CreateDbContext(),
+        _botClient, new CommandBuilder('|'), viewFactory);
 
       await controller.HandleMessageAsync(message);
 
@@ -28,18 +28,11 @@ namespace WordsBot.Common.Test
         throw new Exception($"view is not {nameof(MockView)}");
 
       Assert.True(view.Rendered);
-      Assert.Equal(wantTranslatorCall, translator.AccessCount > 0);
-      var viewData = (TranslateWordView.Data)view.Data;
-      Assert.Equal(want.Word, viewData.Word);
-      Assert.Equal(want.IsWordTraining, viewData.IsWordTraining);
-      Assert.Equal(want.Translations, viewData.Translations);
-      Assert.Equal(want.CallbackData, viewData.CallbackData);
+      var viewData = view.Data;
     }
 
     public static IEnumerable<object[]> GetMessageCase()
     {
-      static ITranslator getTranslator() => new MockTranslater(
-       new MockTranslation("tincture", "en", "ru", new string[] { "настойка" }));
       var addCmd = $"{TranslateController.Command.Add}";
       var removeCmd = $"{TranslateController.Command.Remove}";
 
@@ -51,7 +44,6 @@ namespace WordsBot.Common.Test
               Id = 123,
             },
           },
-          getTranslator(),
           new TranslateWordView.Data(123, "tincture",
             new List<string>(new string[] { "настойка" }), false, addCmd+"|tincture"),
           true,
@@ -65,15 +57,10 @@ namespace WordsBot.Common.Test
               Id = 123,
             },
           },
-          getTranslator(),
           new TranslateWordView.Data(123, "tincture",
             new List<string>(new string[] { "настойка" }), true, removeCmd+"|tincture"),
           false,
         };
-
-      using var dbContext = _dbContextFactory.CreateDbContext();
-      dbContext.TrainingTranslations.Add(new Models.TrainingTranslation(123, "tincture"));
-      dbContext.SaveChanges();
     }
 
 
@@ -82,8 +69,8 @@ namespace WordsBot.Common.Test
     public async Task HandlesCallback(CallbackQuery query, IEnumerable<string> parsedArgs, AddRemoveWordView.Data want)
     {
       var viewFactory = new MockViewFactory();
-      var controller = new TranslateController(_dbContextFactory.CreateDbContext(),
-        _botClient, new CommandBuilder('|'), viewFactory, new MockTranslater());
+      var controller = new GameController(_dbContextFactory.CreateDbContext(),
+        _botClient, new CommandBuilder('|'), viewFactory);
 
       await controller.HandleCallbackAsync(query, parsedArgs);
 
@@ -93,12 +80,7 @@ namespace WordsBot.Common.Test
         throw new Exception($"view is not {nameof(MockView)}");
 
       Assert.True(view.Rendered);
-      var viewData = (AddRemoveWordView.Data)view.Data;
-      Assert.Equal(want.IsWordTraining, viewData.IsWordTraining);
-      Assert.Equal(want.CallbackData, viewData.CallbackData);
-      using var dbContext = _dbContextFactory.CreateDbContext();
-      Assert.Equal(want.IsWordTraining, dbContext.TrainingTranslations.Any(
-        t => t.UserId == want.ChatId && t.Word == parsedArgs.ElementAt(1)));
+      var viewData = view.Data;
     }
 
     public static IEnumerable<object[]> GetCallbackCase()

@@ -11,6 +11,12 @@ namespace WordsBot.Common.Controllers
 {
   public class TranslateController : Controller
   {
+    public enum Command
+    {
+      Add,
+      Remove
+    }
+
     public TranslateController(WordsBotDbContext dbContext,
       ITelegramBotClient telegramBotClient, ICommandBuilder commandBuilder, IViewFactory viewFactory = default, ITranslator translator = default) : base
       (dbContext, telegramBotClient, commandBuilder, viewFactory)
@@ -25,12 +31,12 @@ namespace WordsBot.Common.Controllers
         throw new ArgumentException("To few callback arguments", nameof(parsedArgs));
       }
 
-      var command = parsedArgs.First();
+      var command = Enum.Parse<Command>(parsedArgs.First());
       var word = parsedArgs.ElementAt(1);
       var isTraining = false;
       switch (command)
       {
-        case "add":
+        case Command.Add:
           if (!_dbContext.TrainingTranslations.Any(
             t => t.UserId == query.From.Id && t.Word == word))
           {
@@ -39,7 +45,7 @@ namespace WordsBot.Common.Controllers
           }
           isTraining = true;
           break;
-        case "remove":
+        case Command.Remove:
           var translation = _dbContext.TrainingTranslations.
             FirstOrDefault(t => t.UserId == query.From.Id && t.Word == word);
           if (translation != null)
@@ -58,7 +64,8 @@ namespace WordsBot.Common.Controllers
         query.Message.MessageId,
         query.Id,
         isTraining,
-        _commandBuilder.Add(isTraining ? "remove" : "add", word).Build()));
+        _commandBuilder.Add(
+          $"{(isTraining ? Command.Remove : Command.Add)}", word).Build()));
 
       return view.Render(_telegramBotClient);
     }
@@ -90,7 +97,8 @@ namespace WordsBot.Common.Controllers
         word,
         translations,
         isTraining,
-        _commandBuilder.Add(isTraining ? "remove" : "add", word).Build()));
+        _commandBuilder.Add(
+          $"{(isTraining ? Command.Remove : Command.Add)}", word).Build()));
 
       await view.Render(_telegramBotClient);
     }
