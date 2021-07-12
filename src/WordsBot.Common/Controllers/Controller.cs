@@ -12,7 +12,7 @@ namespace WordsBot.Common.Controllers
   public abstract class Controller
   {
     public Controller(WordsBotDbContext dbContext, ITelegramBotClient telegramBotClient,
-      ICommandBuilder commandBuilder, IViewFactory viewFactory = default)
+      ICommandBuilder commandBuilder, IViewFactory? viewFactory = default)
     {
       _dbContext = dbContext;
       _telegramBotClient = telegramBotClient;

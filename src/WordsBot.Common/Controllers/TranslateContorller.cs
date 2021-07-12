@@ -18,7 +18,7 @@ namespace WordsBot.Common.Controllers
     }
 
     public TranslateController(WordsBotDbContext dbContext,
-      ITelegramBotClient telegramBotClient, ICommandBuilder commandBuilder, IViewFactory viewFactory = default, ITranslator translator = default) : base
+      ITelegramBotClient telegramBotClient, ICommandBuilder commandBuilder, IViewFactory? viewFactory = default, ITranslator? translator = default) : base
       (dbContext, telegramBotClient, commandBuilder, viewFactory)
     {
       _translator = translator ?? Translator ?? throw new Exception("translator not set");
@@ -104,6 +104,6 @@ namespace WordsBot.Common.Controllers
     }
 
     readonly ITranslator _translator;
-    static ITranslator Translator { get; set; }
+    static ITranslator? Translator { get; set; }
   }
 }

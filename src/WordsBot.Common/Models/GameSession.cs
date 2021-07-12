@@ -15,9 +15,9 @@ namespace WordsBot.Common.Models
 
     public int GameSessionId { get; set; }
     public long UserId { get; set; }
-    public string From { get; set; }
-    public string To { get; set; }
-    public string CurrentWord { get; set; }
+    public string From { get; set; } = string.Empty;
+    public string To { get; set; } = string.Empty;
+    public string CurrentWord { get; set; } = string.Empty;
     public List<string> CurrentWordTranslations { get; } = new List<string>();
     public int CurrentWordNumber { get; set; }
     public int TotalWordsCount { get; set; }

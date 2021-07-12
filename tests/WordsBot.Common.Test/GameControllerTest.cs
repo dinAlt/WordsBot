@@ -18,7 +18,7 @@ namespace WordsBot.Common.Test
     {
       var viewFactory = new MockViewFactory();
       var controller = new GameController(_dbContextFactory.CreateDbContext(),
-        _botClient, new CommandBuilder('|'), viewFactory);
+        _botClient, new CommandBuilder('|'), 1, viewFactory);
 
       await controller.HandleMessageAsync(message);
 
@@ -70,7 +70,7 @@ namespace WordsBot.Common.Test
     {
       var viewFactory = new MockViewFactory();
       var controller = new GameController(_dbContextFactory.CreateDbContext(),
-        _botClient, new CommandBuilder('|'), viewFactory);
+        _botClient, new CommandBuilder('|'), 1, viewFactory);
 
       await controller.HandleCallbackAsync(query, parsedArgs);
 
