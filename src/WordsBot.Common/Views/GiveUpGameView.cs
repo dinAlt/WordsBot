@@ -6,9 +6,9 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace WordsBot.Common.Views
 {
-  public class GiveUpView : View<GiveUpView.Data>
+  public class GiveUpGameView : View<GiveUpGameView.Data>
   {
-    public GiveUpView(Data data) : base(data)
+    public GiveUpGameView(Data data) : base(data)
     {
     }
 

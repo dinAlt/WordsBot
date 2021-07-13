@@ -12,12 +12,12 @@ namespace WordsBot.Common.Controllers
   public abstract class Controller
   {
     public Controller(WordsBotDbContext dbContext, ITelegramBotClient telegramBotClient,
-      ICommandBuilder commandBuilder, IViewFactory? viewFactory = default)
+      ICommandBuilder commandBuilder, IViewFactory viewFactory)
     {
       _dbContext = dbContext;
       _telegramBotClient = telegramBotClient;
       _commandBuilder = commandBuilder;
-      _viewFactory = viewFactory ?? _staticViewFactory;
+      _viewFactory = viewFactory;
     }
 
     public abstract Task HandleMessageAsync(Message message);
@@ -31,9 +31,5 @@ namespace WordsBot.Common.Controllers
     protected UserInfo GetUser(long userId) =>
       _dbContext.Users.Where(e => e.UserInfoId == userId)
         .FirstOrDefault() ?? new UserInfo { UserInfoId = userId };
-
-    static readonly IViewFactory _staticViewFactory;
-
-    static Controller() => _staticViewFactory = new ViewFactory();
   }
 }

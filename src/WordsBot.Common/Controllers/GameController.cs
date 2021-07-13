@@ -21,7 +21,7 @@ namespace WordsBot.Common.Controllers
     }
 
     public GameController(WordsBotDbContext dbContext,
-      ITelegramBotClient telegramBotClient, ICommandBuilder commandBuilder, long userId, IViewFactory? viewFactory = default) :
+      ITelegramBotClient telegramBotClient, ICommandBuilder commandBuilder, long userId, IViewFactory viewFactory) :
         base(dbContext, telegramBotClient, commandBuilder, viewFactory)
     {
       _gameSession = _dbContext.GameSessions.
@@ -77,7 +77,34 @@ namespace WordsBot.Common.Controllers
 
     private Task HandleAnswerMessageAsync(Message message)
     {
-      throw new NotImplementedException();
+      string text = message.Text.Trim().ToLower();
+      IEnumerable<string> translations = _dbContext.Translations.FirstOrDefault(
+        t => t.Word == _gameSession.CurrentWord)?.Values ??
+        throw new Exception($"Unexpectedly no translation for word {_gameSession.CurrentWord}");
+      if (!translations.Contains(message.Text))
+      {
+        _gameSession.FailsCount++;
+        return _viewFactory.Create(
+          new FailGameView.Data(message.From.Id,
+            _commandBuilder.Add(Command.Fail.ToString(), _gameSession.CurrentWord).Build())).
+            Render(_telegramBotClient);
+      }
+
+      if (_gameSession.CurrentWordNumber < _gameSession.TotalWordsCount)
+      {
+        return SendNextWordAsync(message.From.Id);
+      }
+
+      _gameSession.State = GameSession.GameState.Ended;
+      return _viewFactory.Create(new FinishGameView.Data(
+        message.From.Id,
+        _gameSession.FailsCount,
+        // TODO: Count correct answers (failsCount incremented on each wrong answer,
+        // even for same word)
+        0,
+        _gameSession.TotalWordsCount,
+        _commandBuilder.Add(Command.Run.ToString()).Build()
+      )).Render(_telegramBotClient);
     }
 
     private async Task HandleWordCountMessageAsync(Message message)
@@ -166,10 +193,23 @@ namespace WordsBot.Common.Controllers
         throw new Exception($"Unexpectedly no translation for word: {word}");
 
       await _viewFactory.Create(
-        new GiveUpView.Data(query.From.Id, query.Id, translations)).
+        new GiveUpGameView.Data(query.From.Id, query.Id, translations)).
         Render(_telegramBotClient);
       _gameSession.FailsCount++;
-      await SendNextWordAsync(query.From.Id);
+      if (_gameSession.CurrentWordNumber < _gameSession.TotalWordsCount)
+      {
+        await SendNextWordAsync(query.From.Id);
+        return;
+      }
+      _gameSession.State = GameSession.GameState.Ended;
+
+      await _viewFactory.Create(new FinishGameView.Data(
+        query.From.Id,
+        _gameSession.FailsCount,
+        0,
+        _gameSession.TotalWordsCount,
+        _commandBuilder.Add(Command.Run.ToString()).Build()
+      )).Render(_telegramBotClient);
     }
 
 

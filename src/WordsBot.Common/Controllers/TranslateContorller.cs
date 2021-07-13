@@ -18,10 +18,11 @@ namespace WordsBot.Common.Controllers
     }
 
     public TranslateController(WordsBotDbContext dbContext,
-      ITelegramBotClient telegramBotClient, ICommandBuilder commandBuilder, IViewFactory? viewFactory = default, ITranslator? translator = default) : base
+      ITelegramBotClient telegramBotClient, ICommandBuilder commandBuilder,
+        IViewFactory viewFactory, ITranslator translator) : base
       (dbContext, telegramBotClient, commandBuilder, viewFactory)
     {
-      _translator = translator ?? Translator ?? throw new Exception("translator not set");
+      _translator = translator;
     }
 
     public override Task HandleCallbackAsync(CallbackQuery query, IEnumerable<string> parsedArgs)
@@ -104,6 +105,5 @@ namespace WordsBot.Common.Controllers
     }
 
     readonly ITranslator _translator;
-    static ITranslator? Translator { get; set; }
   }
 }
