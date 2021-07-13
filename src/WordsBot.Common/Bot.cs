@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Telegram.Bot;
 using Telegram.Bot.Extensions.Polling;
 using Telegram.Bot.Types;
@@ -34,7 +35,7 @@ namespace WordsBot.Common
 
       await foreach (var update in updateReceiver.YieldUpdatesAsync())
       {
-        _ = _router.RouteUpdateAsync(update);
+        await _router.RouteUpdateAsync(update);
       }
     }
 

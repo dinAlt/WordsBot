@@ -57,6 +57,11 @@ namespace WordsBot
   // EF cli needs DbContext descendant, to generate migrations.
   class ProgramDbContext : SqliteDbContext
   {
+    public ProgramDbContext() : base()
+    {
+
+    }
+
     public ProgramDbContext(string dbPath) : base(dbPath)
     {
     }
