@@ -28,7 +28,7 @@ namespace WordsBot.Translators.YandexTranslate
         folderId = _folderId,
         sourceLanguageCode = from,
         targetLanguageCode = to,
-        texts = new { word }
+        texts = new string[] { word }
       });
 
       _httpClient.DefaultRequestHeaders.Authorization =
