@@ -6,3 +6,4 @@ config.json
 bin/
 obj/
 .env
+*mono_crash.*
