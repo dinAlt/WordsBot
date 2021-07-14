@@ -22,6 +22,7 @@ namespace WordsBot.Common.Models
     public int CurrentWordNumber { get; set; }
     public int TotalWordsCount { get; set; }
     public int FailsCount { get; set; }
+    public int SuccessCount { get; set; }
     public GameState State { get; set; }
 
     public void Reset()
@@ -31,6 +32,7 @@ namespace WordsBot.Common.Models
       CurrentWordNumber = 0;
       TotalWordsCount = 0;
       FailsCount = 0;
+      SuccessCount = 0;
       State = GameState.Undefined;
     }
   }

@@ -18,7 +18,7 @@ namespace WordsBot.Common.Views
     public override Task Render(ITelegramBotClient renderer)
     {
       return renderer.SendTextMessageAsync(_data.ChatId,
-        $"{_data.Word}\n{_data.CurrentWordNum}\\{_data.FailsCount}\\{_data.WordsCount}\\",
+        $"{_data.Word}\n{_data.CurrentWordNum}\\{_data.WordsCount}",
         replyMarkup: new InlineKeyboardMarkup(new InlineKeyboardButton
         {
           Text = "не знаю",

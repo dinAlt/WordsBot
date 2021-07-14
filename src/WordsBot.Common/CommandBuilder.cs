@@ -6,12 +6,13 @@ namespace WordsBot.Common
   public class CommandBuilder : ICommandBuilder
   {
     readonly char _delimiter;
-    readonly List<string> _parts;
+    readonly string[] _prefix;
+    readonly List<string> _parts = new();
 
     public CommandBuilder(char delimiter, params string[] prefix)
     {
       _delimiter = delimiter;
-      _parts = new List<string>(prefix);
+      _prefix = prefix;
     }
 
     public ICommandBuilder Add(params string[] args)
@@ -20,6 +21,13 @@ namespace WordsBot.Common
       return this;
     }
 
-    public string Build() => string.Join(_delimiter, _parts);
+    public ICommandBuilder Clear()
+    {
+      _parts.Clear();
+      return this;
+    }
+
+    public string Build() => string.Join(_delimiter, _prefix) + _delimiter +
+      string.Join(_delimiter, _parts);
   }
 }

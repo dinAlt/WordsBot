@@ -17,6 +17,7 @@ namespace WordsBot.Common
     {
       Translator,
       Game,
+      Menu,
     }
 
     public Router(
@@ -65,12 +66,21 @@ namespace WordsBot.Common
     async Task RouteMessageAsync(Message message)
     {
       using var dbContext = _dbContextFactory.CreateDbContext();
+      var text = message.Text.Trim().ToLower();
+      if (text == "/start" || text == "/menu")
+      {
+        await new MenuController(dbContext, _telegramBotClient,
+          new CommandBuilder('|', new string[] { CallbackRoute.Game.ToString() }), _viewFactory).
+            HandleMessageAsync(message);
+        return;
+      }
 
       var gameController = new GameController(dbContext, _telegramBotClient,
         new CommandBuilder('|', new string[] { CallbackRoute.Game.ToString() }),
         message.From.Id, _viewFactory);
 
-      if (gameController.State == Models.GameSession.GameState.Running)
+      if (gameController.State == Models.GameSession.GameState.Running ||
+        gameController.State == Models.GameSession.GameState.WaitingCount)
       {
         await gameController.HandleMessageAsync(message);
         return;

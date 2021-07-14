@@ -81,7 +81,7 @@ namespace WordsBot.Common.Controllers
       IEnumerable<string> translations = _dbContext.Translations.FirstOrDefault(
         t => t.Word == _gameSession.CurrentWord)?.Values ??
         throw new Exception($"Unexpectedly no translation for word {_gameSession.CurrentWord}");
-      if (!translations.Contains(message.Text))
+      if (!translations.Contains(text))
       {
         _gameSession.FailsCount++;
         return _viewFactory.Create(
@@ -90,6 +90,7 @@ namespace WordsBot.Common.Controllers
             Render(_telegramBotClient);
       }
 
+      _gameSession.SuccessCount++;
       if (_gameSession.CurrentWordNumber < _gameSession.TotalWordsCount)
       {
         return SendNextWordAsync(message.From.Id);
@@ -99,9 +100,7 @@ namespace WordsBot.Common.Controllers
       return _viewFactory.Create(new FinishGameView.Data(
         message.From.Id,
         _gameSession.FailsCount,
-        // TODO: Count correct answers (failsCount incremented on each wrong answer,
-        // even for same word)
-        0,
+        _gameSession.SuccessCount,
         _gameSession.TotalWordsCount,
         _commandBuilder.Add(Command.Run.ToString()).Build()
       )).Render(_telegramBotClient);
@@ -206,7 +205,7 @@ namespace WordsBot.Common.Controllers
       await _viewFactory.Create(new FinishGameView.Data(
         query.From.Id,
         _gameSession.FailsCount,
-        0,
+        _gameSession.SuccessCount,
         _gameSession.TotalWordsCount,
         _commandBuilder.Add(Command.Run.ToString()).Build()
       )).Render(_telegramBotClient);

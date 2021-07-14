@@ -12,7 +12,7 @@ namespace WordsBot.Common.Views
     {
     }
 
-    public record Data(long ChatId, int FailsCount, int AnsweredCount, int TotalCount,
+    public record Data(long ChatId, int FailsCount, int SuccessCount, int TotalCount,
       string RepeatCommand);
 
     public override Task Render(ITelegramBotClient renderer)

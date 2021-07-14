@@ -24,7 +24,7 @@ namespace WordsBot.Common.Views
       }
 
       await renderer.SendTextMessageAsync(chatId, wordsCount > 0 ?
-        "Введите количество" : "Игра началась!");
+        "Игра началась!" : "Введите количество");
     }
   }
 }

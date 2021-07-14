@@ -15,6 +15,7 @@ namespace WordsBot.Common.Views
       NextWordView.Data d => new NextWordView(d),
       PauseResumeGameView.Data d => new PauseResumeGameView(d),
       RunGameView.Data d => new RunGameView(d),
+      MainMenuView.Data d => new MainMenuView(d),
       _ => throw new ArgumentException(
         $"can't use param of type {data?.GetType()}", nameof(data))
     };
