@@ -25,7 +25,7 @@ namespace WordsBot.Common.Controllers
       _translator = translator;
     }
 
-    public override Task HandleCallbackAsync(CallbackQuery query, IEnumerable<string> parsedArgs)
+    public override async Task HandleCallbackAsync(CallbackQuery query, IEnumerable<string> parsedArgs)
     {
       if (parsedArgs.Count() < 2)
       {
@@ -68,7 +68,7 @@ namespace WordsBot.Common.Controllers
         _commandBuilder.Add(
           $"{(isTraining ? Command.Remove : Command.Add)}", word).Build()));
 
-      return view.Render(_telegramBotClient);
+      await view.Render(_telegramBotClient);
     }
 
     public override async Task HandleMessageAsync(Message message)

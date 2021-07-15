@@ -20,9 +20,9 @@ namespace WordsBot.Common.Views
 
     public record Data(long ChatId, IEnumerable<MenuItem> Menu);
 
-    public override Task Render(ITelegramBotClient renderer)
+    public override async Task Render(ITelegramBotClient renderer)
     {
-      return renderer.SendTextMessageAsync(
+      await renderer.SendTextMessageAsync(
         _data.ChatId,
         "Выберите действие:",
         replyMarkup: new InlineKeyboardMarkup(_data.Menu.Select(t =>

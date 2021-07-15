@@ -15,7 +15,7 @@ namespace WordsBot.Common.Controllers
       ICommandBuilder commandBuilder, IViewFactory viewFactory) : base(dbContext, telegramBotClient, commandBuilder, viewFactory) { }
 
 
-    public override Task HandleMessageAsync(Message message)
+    public override async Task HandleMessageAsync(Message message)
     {
       var command = message.Text.Trim().ToLower();
 
@@ -27,7 +27,7 @@ namespace WordsBot.Common.Controllers
       var gameCommandBuilder = new CommandBuilder('|', "Game");
       var runCmd = GameController.Command.Run.ToString();
 
-      return _viewFactory.Create(
+      await _viewFactory.Create(
         new MainMenuView.Data(message.From.Id, new MainMenuView.MenuItem[] {
           new MainMenuView.MenuItem{
             Text = "Начать игру",

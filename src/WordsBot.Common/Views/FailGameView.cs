@@ -14,7 +14,7 @@ namespace WordsBot.Common.Views
 
     public record Data(long ChatId, string GiveUpCommand);
 
-    public async override Task Render(ITelegramBotClient renderer)
+    public override async Task Render(ITelegramBotClient renderer)
     {
       await renderer.SendTextMessageAsync(_data.ChatId,
         "не верно",

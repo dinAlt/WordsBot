@@ -14,9 +14,9 @@ namespace WordsBot.Common.Views
 
     public record Data(long ChatId, string Text);
 
-    public override Task Render(ITelegramBotClient renderer)
+    public override async Task Render(ITelegramBotClient renderer)
     {
-      return renderer.SendTextMessageAsync(_data.ChatId, _data.Text);
+      await renderer.SendTextMessageAsync(_data.ChatId, _data.Text);
     }
   }
 }

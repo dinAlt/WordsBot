@@ -75,7 +75,7 @@ namespace WordsBot.Common.Controllers
 
     readonly GameSession _gameSession;
 
-    private Task HandleAnswerMessageAsync(Message message)
+    private async Task HandleAnswerMessageAsync(Message message)
     {
       string text = message.Text.Trim().ToLower();
       IEnumerable<string> translations = _dbContext.Translations.FirstOrDefault(
@@ -84,20 +84,22 @@ namespace WordsBot.Common.Controllers
       if (!translations.Contains(text))
       {
         _gameSession.FailsCount++;
-        return _viewFactory.Create(
+        await _viewFactory.Create(
           new FailGameView.Data(message.From.Id,
             _commandBuilder.Add(Command.Fail.ToString(), _gameSession.CurrentWord).Build())).
             Render(_telegramBotClient);
+        return;
       }
 
       _gameSession.SuccessCount++;
       if (_gameSession.CurrentWordNumber < _gameSession.TotalWordsCount)
       {
-        return SendNextWordAsync(message.From.Id);
+        await SendNextWordAsync(message.From.Id);
+        return;
       }
 
       _gameSession.State = GameSession.GameState.Ended;
-      return _viewFactory.Create(new FinishGameView.Data(
+      await _viewFactory.Create(new FinishGameView.Data(
         message.From.Id,
         _gameSession.FailsCount,
         _gameSession.SuccessCount,
@@ -162,12 +164,12 @@ namespace WordsBot.Common.Controllers
       }
     }
 
-    private Task SendNextWordAsync(ChatId to)
+    private async Task SendNextWordAsync(ChatId to)
     {
       _gameSession.CurrentWord = _dbContext.RandomWord(to.Identifier);
       _gameSession.CurrentWordNumber++;
 
-      return _viewFactory.Create(
+      await _viewFactory.Create(
         new NextWordView.Data(
           to.Identifier,
           _gameSession.TotalWordsCount,

@@ -27,12 +27,12 @@ namespace WordsBot.Common
       (_dbContextFactory, _telegramBotClient, _viewFactory, _translator) =
         (dbContextFactory, telegramBotClient, viewFactory, translator);
 
-    public Task RouteUpdateAsync(Update update) => update.Type switch
+    public async Task RouteUpdateAsync(Update update) => await (update.Type switch
     {
       UpdateType.Message => RouteMessageAsync(update.Message),
       UpdateType.CallbackQuery => RouteCallbackQueryAsync(update.CallbackQuery),
       _ => Task.CompletedTask,
-    };
+    });
 
     readonly IDbContextFactory<Models.WordsBotDbContext> _dbContextFactory;
     readonly ITelegramBotClient _telegramBotClient;

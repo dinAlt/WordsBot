@@ -15,10 +15,10 @@ namespace WordsBot.Common.Views
     public record Data(long ChatId, int FailsCount, int SuccessCount, int TotalCount,
       string RepeatCommand);
 
-    public override Task Render(ITelegramBotClient renderer)
+    public override async Task Render(ITelegramBotClient renderer)
     {
       var (chatId, failsCount, answeredCount, totalCount, repeatCommand) = _data;
-      return renderer.SendTextMessageAsync(chatId,
+      await renderer.SendTextMessageAsync(chatId,
         $"Игра завершена!\nВсего слов: {totalCount}\n" +
         $"Правильных ответов: {answeredCount}\n" +
         $"Ошибок: {failsCount}",

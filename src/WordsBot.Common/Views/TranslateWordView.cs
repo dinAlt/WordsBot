@@ -14,9 +14,9 @@ namespace WordsBot.Common.Views
     public record Data(long ChatId, string Word,
       IEnumerable<string> Translations, bool IsWordTraining, string CallbackData);
 
-    public override Task Render(ITelegramBotClient renderer)
+    public override async Task Render(ITelegramBotClient renderer)
     {
-      return renderer.SendTextMessageAsync(
+      await renderer.SendTextMessageAsync(
         _data.ChatId,
         string.Join("\n", _data.Translations),
         replyMarkup: new InlineKeyboardMarkup(new InlineKeyboardButton
