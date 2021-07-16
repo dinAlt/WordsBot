@@ -47,7 +47,7 @@ namespace WordsBot.Common.Controllers
       await (Enum.Parse<Command>(parsedArgs.First()) switch
       {
         Command.Run => HandleRunAsync(query, parsedArgs.Skip(1)),
-        Command.Fail => HandleFailAsync(query, parsedArgs.Skip(1)),
+        Command.Fail => HandleGiveUpAsync(query, parsedArgs.Skip(1)),
         Command.Pause => HandlePauseAsync(query),
         Command.Resume => HandleResumeAsync(query),
         _ => throw new NotImplementedException()
@@ -104,6 +104,7 @@ namespace WordsBot.Common.Controllers
         _gameSession.FailsCount,
         _gameSession.SuccessCount,
         _gameSession.TotalWordsCount,
+        _gameSession.GiveUpsCount,
         _commandBuilder.Add(Command.Run.ToString()).Build()
       )).Render(_telegramBotClient);
     }
@@ -180,7 +181,7 @@ namespace WordsBot.Common.Controllers
             Render(_telegramBotClient);
     }
 
-    private async Task HandleFailAsync(CallbackQuery query, IEnumerable<string> args)
+    private async Task HandleGiveUpAsync(CallbackQuery query, IEnumerable<string> args)
     {
       if (!args.Any())
       {
@@ -196,7 +197,7 @@ namespace WordsBot.Common.Controllers
       await _viewFactory.Create(
         new GiveUpGameView.Data(query.From.Id, query.Id, translations)).
         Render(_telegramBotClient);
-      _gameSession.FailsCount++;
+      _gameSession.GiveUpsCount++;
       if (_gameSession.CurrentWordNumber < _gameSession.TotalWordsCount)
       {
         await SendNextWordAsync(query.From.Id);
@@ -209,6 +210,7 @@ namespace WordsBot.Common.Controllers
         _gameSession.FailsCount,
         _gameSession.SuccessCount,
         _gameSession.TotalWordsCount,
+        _gameSession.GiveUpsCount,
         _commandBuilder.Add(Command.Run.ToString()).Build()
       )).Render(_telegramBotClient);
     }
