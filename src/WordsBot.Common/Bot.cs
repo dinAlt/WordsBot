@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Extensions.Polling;
@@ -13,16 +14,16 @@ namespace WordsBot.Common
       _router = router;
     }
 
-    public async Task Run()
+    public async Task Run(CancellationToken cancellationToken = default)
     {
-      var me = await _telegramBotClient.GetMeAsync();
+      var me = await _telegramBotClient.GetMeAsync(cancellationToken: cancellationToken);
       if (me == null)
       {
         throw new Exception("Not me at all");
       }
 
       updateReceiver = new QueuedUpdateReceiver(_telegramBotClient);
-      updateReceiver.StartReceiving();
+      updateReceiver.StartReceiving(cancellationToken: cancellationToken);
 
       await foreach (var update in updateReceiver.YieldUpdatesAsync())
       {
