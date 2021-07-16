@@ -1,16 +1,7 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Telegram.Bot;
 using Telegram.Bot.Extensions.Polling;
-using Telegram.Bot.Types;
-using Telegram.Bot.Types.Enums;
-using Telegram.Bot.Types.ReplyMarkups;
-using WordsBot.Common.Models;
 
 namespace WordsBot.Common
 {
