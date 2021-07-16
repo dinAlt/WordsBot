@@ -1,18 +1,16 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Telegram.Bot;
 using Telegram.Bot.Extensions.Polling;
 
 namespace WordsBot.Common
 {
-  public class Bot
+  public class Bot : IWordsBot
   {
-    public Bot(ITelegramBotClient botClient, IRouter router)
-    {
-      _telegramBotClient = botClient;
-      _router = router;
-    }
+    public Bot(ILogger<Bot> logger, ITelegramBotClient botClient, IRouter router) =>
+     (_logger, _telegramBotClient, _router) = (logger, botClient, router);
 
     public async Task Run(CancellationToken cancellationToken = default)
     {
@@ -25,9 +23,19 @@ namespace WordsBot.Common
       updateReceiver = new QueuedUpdateReceiver(_telegramBotClient);
       updateReceiver.StartReceiving(cancellationToken: cancellationToken);
 
+      _logger.LogInformation("Bot listen for updates");
       await foreach (var update in updateReceiver.YieldUpdatesAsync())
       {
-        await _router.RouteUpdateAsync(update);
+        _logger.LogInformation($"Got update with Type={update.Type} and Id={update.Id}");
+        try
+        {
+          await _router.RouteUpdateAsync(update);
+        }
+        catch (Exception ex)
+        {
+          _logger.LogError(ex, "RouteUpdate failed");
+          throw;
+        }
       }
     }
 
@@ -39,6 +47,7 @@ namespace WordsBot.Common
 
     readonly ITelegramBotClient _telegramBotClient;
     readonly IRouter _router;
+    readonly ILogger<Bot> _logger;
 
     QueuedUpdateReceiver? updateReceiver;
   }

@@ -2,11 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using WordsBot.Common.Controllers;
+using WordsBot.Common.Models;
 using WordsBot.Common.Views;
 
 namespace WordsBot.Common
@@ -20,12 +21,10 @@ namespace WordsBot.Common
       Menu,
     }
 
-    public Router(
-      IDbContextFactory<Models.WordsBotDbContext> dbContextFactory,
-      ITelegramBotClient telegramBotClient, IViewFactory viewFactory,
+    public Router(IServiceProvider serviceProvider, ITelegramBotClient telegramBotClient, IViewFactory viewFactory,
       ITranslator translator) =>
-      (_dbContextFactory, _telegramBotClient, _viewFactory, _translator) =
-        (dbContextFactory, telegramBotClient, viewFactory, translator);
+      (_serviceProvider, _telegramBotClient, _viewFactory, _translator) =
+        (serviceProvider, telegramBotClient, viewFactory, translator);
 
     public async Task RouteUpdateAsync(Update update) => await (update.Type switch
     {
@@ -34,7 +33,7 @@ namespace WordsBot.Common
       _ => Task.CompletedTask,
     });
 
-    readonly IDbContextFactory<Models.WordsBotDbContext> _dbContextFactory;
+    readonly IServiceProvider _serviceProvider;
     readonly ITelegramBotClient _telegramBotClient;
     readonly IViewFactory _viewFactory;
     readonly ITranslator _translator;
@@ -49,7 +48,8 @@ namespace WordsBot.Common
       var route = Enum.Parse<CallbackRoute>(args.First());
       var commandBuilder = new CommandBuilder('|', new string[] { route.ToString() });
 
-      using var dbContext = _dbContextFactory.CreateDbContext();
+      using var scope = _serviceProvider.CreateScope();
+      var dbContext = scope.ServiceProvider.GetRequiredService<WordsBotDbContext>();
 
       await (route switch
       {
@@ -65,7 +65,9 @@ namespace WordsBot.Common
 
     async Task RouteMessageAsync(Message message)
     {
-      using var dbContext = _dbContextFactory.CreateDbContext();
+      using var scope = _serviceProvider.CreateScope();
+      var dbContext = scope.ServiceProvider.GetRequiredService<WordsBotDbContext>();
+
       var text = message.Text.Trim().ToLower();
       if (text == "/start" || text == "/menu")
       {

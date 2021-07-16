@@ -18,42 +18,25 @@ namespace WordsBot
   public class Worker : BackgroundService
   {
     private readonly ILogger<Worker> _logger;
+    private readonly IWordsBot _wordsBot;
+    private readonly IHostApplicationLifetime _applicationLifetime;
 
-    public Worker(ILogger<Worker> logger)
-    {
-      _logger = logger;
-    }
+    public Worker(ILogger<Worker> logger, IHostApplicationLifetime applicationLifetime, IWordsBot wordsBot) =>
+      (_logger, _applicationLifetime, _wordsBot) = (logger, applicationLifetime, wordsBot);
+
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
       _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-      Console.OutputEncoding = System.Text.Encoding.UTF8;
-      var config = new ConfigurationBuilder()
-         .SetBasePath(System.IO.Directory.GetCurrentDirectory())
-         .AddJsonFile("config.json", true)
-         .AddEnvironmentVariables("WORDSBOT_")
-         .Build();
-
-      var telegramAccessToken = config["TelegramAccessToken"];
-      var sqliteDbPath = config["SqliteDatabasePath"];
-      var yandexCloudServiceAccountKey = config["YandexCloudServiceAccountKey"];
-      var yandexCloudFolderId = config["YandexCloudFolderId"];
-      var dbContextFactory = new SqliteDbContextFactory(sqliteDbPath);
-
-      using (var dbContext = new ProgramDbContext(sqliteDbPath))
+      try
       {
-        dbContext!.Database.Migrate();
+        await _wordsBot.Run(stoppingToken);
       }
-      var telegramBotClient = new TelegramBotClient(telegramAccessToken);
-      var router = new Router(
-        dbContextFactory,
-        telegramBotClient,
-        new ViewFactory(),
-        new YandexTranslate(yandexCloudServiceAccountKey, yandexCloudFolderId)
-      );
-
-      var bot = new Bot(telegramBotClient, router);
-      await bot.Run(stoppingToken);
+      catch (Exception ex)
+      {
+        _logger.LogError(ex, "worker exec");
+        _applicationLifetime.StopApplication();
+      }
     }
   }
 }
