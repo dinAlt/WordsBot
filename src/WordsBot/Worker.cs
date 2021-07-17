@@ -40,6 +40,7 @@ namespace WordsBot
       catch (Exception ex)
       {
         _logger.LogError(ex, "worker exec");
+        Environment.ExitCode = 1;
         _applicationLifetime.StopApplication();
       }
     }
