@@ -1,0 +1,4 @@
+WORDSBOT_TelegramAccessToken=-
+WORDSBOT_YandexCloudServiceAccountKey=-
+WORDSBOT_YandexCloudFolderId=-
+WORDSBOT_SqliteDatabasePath=/data/base.db
